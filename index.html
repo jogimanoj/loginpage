@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login & Registration</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.4/css/boxicons.min.css" />
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <style>
+    :root {
+      --primary-color: #4EA685;
+      --secondary-color: #57B894;
+      --black: #000000;
+      --white: #ffffff;
+      --gray: #efefef;
+      --gray-2: #757575;
+    }
+    * {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      height: 100vh;
+    }
+    .col {
+      width: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .form-wrapper {
+      width: 100%;
+      max-width: 30rem;
+    }
+    .form {
+      padding: 2rem;
+      background-color: var(--white);
+      border-radius: 1.5rem;
+      width: 100%;
+      box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+      transform: scale(0);
+      transition: .5s ease-in-out;
+      transition-delay: 1s;
+    }
+    .input-group {
+      position: relative;
+      width: 100%;
+      margin: 1rem 0;
+    }
+    .input-group i {
+      position: absolute;
+      top: 50%;
+      left: 1rem;
+      transform: translateY(-50%);
+      font-size: 1.4rem;
+      color: var(--gray-2);
+    }
+    .input-group input, .input-group select {
+      width: 100%;
+      padding: 1rem 3rem;
+      font-size: 1rem;
+      background-color: var(--gray);
+      border-radius: .5rem;
+      border: 0.125rem solid var(--white);
+      outline: none;
+    }
+    .input-group input:focus {
+      border: 0.125rem solid var(--primary-color);
+    }
+    .form button {
+      cursor: pointer;
+      width: 100%;
+      padding: .6rem 0;
+      border-radius: .5rem;
+      border: none;
+      background-color: var(--primary-color);
+      color: var(--white);
+      font-size: 1.2rem;
+      outline: none;
+    }
+    .form p {
+      margin: 1rem 0;
+      font-size: .9rem;
+    }
+    .pointer {
+      cursor: pointer;
+    }
+    .container.sign-in .form.sign-in,
+    .container.sign-up .form.sign-up {
+      transform: scale(1);
+    }
+    .content-row {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 6;
+      width: 100%;
+    }
+    .text {
+      margin: 4rem;
+      color: var(--white);
+    }
+    .text h2 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin: 2rem 0;
+      transition: 1s ease-in-out;
+    }
+    .text.sign-in h2,
+    .text.sign-in p {
+      transform: translateX(-250%);
+    }
+    .text.sign-up h2,
+    .text.sign-up p {
+      transform: translateX(250%);
+    }
+    .container.sign-in .text.sign-in h2,
+    .container.sign-in .text.sign-in p,
+    .container.sign-up .text.sign-up h2,
+    .container.sign-up .text.sign-up p {
+      transform: translateX(0);
+    }
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 300vw;
+      transform: translate(35%, 0);
+      background-image: linear-gradient(-45deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      transition: 1s ease-in-out;
+      z-index: 6;
+      border-bottom-right-radius: max(50vw, 50vh);
+      border-top-left-radius: max(50vw, 50vh);
+    }
+    .container.sign-in::before {
+      transform: translate(0, 0);
+      right: 50%;
+    }
+    .container.sign-up::before {
+      transform: translate(100%, 0);
+      right: 50%;
+    }
+    .error {
+      color: red;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div id="container" class="container">
+    <div class="row">
+
+      <!-- SIGN UP COLUMN -->
+      <div class="col sign-up">
+        <div class="form-wrapper">
+          <div class="form sign-up">
+            <form id="regForm" onsubmit="return false;">
+              <div class="input-group">
+                <select name="usertype" id="usertype" onchange="handleUserTypeChange()">
+                  <option value="">Select User Type</option>
+                  <option value="hospital">Hospital</option>
+                  <option value="doctor">Doctor</option>
+                  <option value="laboratory">Laboratory</option>
+                  <option value="patient">Patient</option>
+                </select>
+              </div>
+
+              <!-- Credentials: shown after selecting usertype -->
+              <div id="credentials_section" style="display:none;">
+                <div class="input-group">
+                  <i class='bx bxs-user'></i>
+                  <input type="text" name="userID" placeholder="User ID" required />
+                </div>
+                <div class="input-group">
+                  <i class='bx bxs-lock-alt'></i>
+                  <input type="password" name="password" placeholder="Password" required />
+                </div>
+                <div class="input-group">
+                  <i class='bx bxs-lock-alt'></i>
+                  <input type="password" name="confirm_password" placeholder="Confirm Password" required />
+                </div>
+              </div>
+
+              <!-- Common fields: shown after selecting usertype -->
+              <div id="common_fields" style="display:none;">
+                <div class="input-group"><input type="text" id="name" placeholder="Full Name" required /></div>
+                <div class="input-group"><input type="text" id="email" placeholder="Email" required /></div>
+                <div class="input-group"><input type="text" id="contact" placeholder="+91 1234567890" required /></div>
+              </div>
+
+              <!-- Role specific fields -->
+              <div id="hospital_dept" style="display:none">
+                <div class="input-group"><input type="text" id="designation" placeholder="Designation" required /></div>
+                <div class="input-group"><input type="text" id="hospital_name" placeholder="Hospital Name" required /></div>
+              </div>
+              <div id="doctor_dept" style="display:none">
+                <div class="input-group"><input type="text" id="experience" placeholder="Experience" required /></div>
+                <div class="input-group"><input type="text" id="specialisation" placeholder="Specialisation" required /></div>
+              </div>
+              <div id="lab_dept" style="display:none">
+                <div class="input-group"><input type="text" id="address" placeholder="Lab Address" required /></div>
+              </div>
+              <div id="patient_dept" style="display:none">
+                <div class="input-group"><input type="date" id="dob" placeholder="Date of Birth" required /></div>
+              </div>
+
+              <!-- Google reCAPTCHA -->
+              <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div><br>
+
+              <!-- Submit Button: shown after selecting usertype -->
+              <div id="submit_section" style="display:none;">
+                <button type="button" onclick="submitForm()">Submit</button>
+              </div>
+
+              <p class="error" id="errorMsg"></p>
+              <p><span>Already have an account?</span> <b onclick="toggle()" class="pointer">Sign in here</b></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGN IN COLUMN -->
+      <div class="col sign-in">
+        <div class="form-wrapper">
+          <div class="form sign-in">
+            <form action="#">
+              <div class="input-group"><i class='bx bxs-user'></i><input type="text" placeholder="Username" required /></div>
+              <div class="input-group"><i class='bx bxs-lock-alt'></i><input type="password" placeholder="Password" required /></div>
+              <button type="submit">Sign in</button>
+              <p><span>Don't have an account?</span> <b onclick="toggle()" class="pointer">Sign up here</b></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Content row -->
+    <div class="row content-row">
+      <div class="col"><div class="text sign-in"><h2>Welcome</h2></div></div>
+      <div class="col"><div class="text sign-up"><h2>Join with us</h2></div></div>
+    </div>
+  </div>
+
+  <script>
+    let container = document.getElementById('container');
+    function toggle() {
+      container.classList.toggle('sign-in');
+      container.classList.toggle('sign-up');
+    }
+    setTimeout(() => container.classList.add('sign-in'), 200);
+
+    function handleUserTypeChange() {
+      const userType = document.getElementById('usertype').value;
+
+      // Show/hide common sections based on user type selection
+      const credentialsSection = document.getElementById('credentials_section');
+      const commonFields = document.getElementById('common_fields');
+      const submitSection = document.getElementById('submit_section');
+
+      if (userType) {
+        credentialsSection.style.display = 'block';
+        commonFields.style.display = 'block';
+        submitSection.style.display = 'block';
+      } else {
+        credentialsSection.style.display = 'none';
+        commonFields.style.display = 'none';
+        submitSection.style.display = 'none';
+      }
+
+      // Hide all role-specific fields initially
+      ['hospital_dept', 'doctor_dept', 'lab_dept', 'patient_dept'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+
+      // Show specific fields based on user type
+      if (userType) {
+        const specificDept = document.getElementById(userType + '_dept');
+        if (specificDept) specificDept.style.display = 'block';
+      }
+    }
+
+    function submitForm() {
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.textContent = '';
+
+      const userType = document.getElementById('usertype').value.trim();
+      const userID = document.querySelector("input[name='userID']").value.trim();
+      const password = document.querySelector("input[name='password']").value;
+      const confirmPassword = document.querySelector("input[name='confirm_password']").value;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+
+      // Basic required validations
+      if (!userType) {
+        errorMsg.textContent = 'Please select a User Type.';
+        return;
+      }
+      if (!userID) {
+        errorMsg.textContent = 'Please enter User ID.';
+        return;
+      }
+      if (!password) {
+        errorMsg.textContent = 'Please enter Password.';
+        return;
+      }
+      if (!confirmPassword) {
+        errorMsg.textContent = 'Please confirm your Password.';
+        return;
+      }
+      if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match.';
+        return;
+      }
+      if (!name) {
+        errorMsg.textContent = 'Please enter your Full Name.';
+        return;
+      }
+      const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+      if (!emailPattern.test(email)) {
+        errorMsg.textContent = 'Please enter a valid Email address.';
+        return;
+      }
+      const contactPattern = /^\+91\s?\d{10}$/;
+      if (!contactPattern.test(contact)) {
+        errorMsg.textContent = 'Please enter a valid Contact number.';
+        return;
+      }
+
+      // Role-specific validations
+      if (userType === 'hospital') {
+        const designation = document.getElementById('designation').value.trim();
+        const hospitalName = document.getElementById('hospital_name').value.trim();
+        if (!designation || !hospitalName) {
+          errorMsg.textContent = 'Please fill all hospital-specific fields.';
+          return;
+        }
+      }
+      if (userType === 'doctor') {
+        const experience = document.getElementById('experience').value.trim();
+        const specialisation = document.getElementById('specialisation').value.trim();
+        if (!experience || !specialisation) {
+          errorMsg.textContent = 'Please fill all doctor-specific fields.';
+          return;
+        }
+      }
+      if (userType === 'laboratory') {
+        const address = document.getElementById('address').value.trim();
+        if (!address) {
+          errorMsg.textContent = 'Please provide the lab address.';
+          return;
+        }
+      }
+      if (userType === 'patient') {
+        const dob = document.getElementById('dob').value.trim();
+        if (!dob) {
+          errorMsg.textContent = 'Please select your date of birth.';
+          return;
+        }
+      }
+
+      // Check reCAPTCHA
+      if (!grecaptcha.getResponse()) {
+        errorMsg.textContent = 'Please complete the CAPTCHA.';
+        return;
+      }
+
+      // If all good:
+      alert('Form submitted successfully!');
+      // Here you can proceed to submit the form data to your server via AJAX or form.submit()
+    }
+  </script>
+</body>
+</html>
